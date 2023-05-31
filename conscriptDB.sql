@@ -754,13 +754,13 @@ VALUES
 	1, -- (SELECT id FROM family ORDER BY id DESC LIMIT 1)
 	(SELECT id FROM kinship WHERE kinship_name='Кровное'),
 	(SELECT pi.id FROM personal_information_r pi INNER JOIN fullname_r fn ON fn.id=pi.fullname_id WHERE firstname='Аркадий' AND secondname='Дмитиев' AND surname='Витальевич' ORDER BY pi.id DESC LIMIT 1),
-    1
+    2
 ),
 (
 	1, -- (SELECT id FROM family ORDER BY id DESC LIMIT 1)
 	(SELECT id FROM kinship WHERE kinship_name='Кровное'),
 	(SELECT pi.id FROM personal_information_r pi INNER JOIN fullname_r fn ON fn.id=pi.fullname_id WHERE firstname='Алиса' AND secondname='Дмитиева' AND surname='Юрьевна' ORDER BY pi.id DESC LIMIT 1),
-    1
+    2
 ),
 (
 	1, -- (SELECT id FROM family ORDER BY id DESC LIMIT 1)
@@ -785,6 +785,7 @@ VALUES
 	24,
 	FALSE
 );
+
 
 # Личное дело призыника
 INSERT INTO private_bussiness (personal_information_id, medical_report_id, date_of_registration, deregistration_date)
@@ -819,6 +820,7 @@ VALUES (
 );
 ##################################### /Шаблон для добавления призывника ####################################
 
+#список всех призывников#
 SELECT conscript.id, fullname.firstname, fullname.secondname, fullname.surname, sex.sex_name, personal_information.age, address.region, address.city, address.street, address.house_num, address.apartment_num
 FROM conscript, private_bussiness, personal_information, fullname, address, sex
 WHERE personal_information.fullname_id = fullname.id
@@ -827,14 +829,16 @@ AND personal_information.sex_id = sex.id
 AND personal_information.id = private_bussiness.personal_information_id
 AND conscript.private_bussiness_id = private_bussiness.id;
 
-SELECT conscript.id, fullname.firstname, fullname.secondname, fullname.surname, medical_status.status_name
-FROM personal_information, medical_report, medical_status, private_bussiness, fullname, conscript
+#статус службы - негоден#
+SELECT conscript.id, fullname.firstname, fullname.secondname, fullname.surname, category.category_name
+FROM personal_information, private_bussiness, fullname, conscript, category
 WHERE personal_information.fullname_id = fullname.id
 AND personal_information.id = private_bussiness.personal_information_id
-AND private_bussiness.medical_report_id = medical_report.id
-AND medical_report.medical_status_id = medical_status.id
+AND private_bussiness.category_id = category.id
+AND category.category_name = "Д"
 AND conscript.private_bussiness_id = private_bussiness.id;
 
+#список родственников определенного призывника#
 SELECT conscript.id, fullname.firstname, fullname.secondname, fullname.surname, personal_information_r.id, fullname_r.firstname, fullname_r.secondname, fullname_r.surname
 FROM personal_information, personal_information_r, family_composition, fullname_r, fullname, conscript, private_bussiness
 WHERE personal_information.id = 1
@@ -845,7 +849,7 @@ AND personal_information_r.fullname_id = fullname_r.id
 AND personal_information.id = private_bussiness.personal_information_id
 AND conscript.private_bussiness_id = private_bussiness.id;
 
-
+#призывники в определенном городе#
 SELECT conscript.id, fullname.firstname, fullname.secondname, fullname.surname, address.city
 FROM personal_information, address, fullname, conscript, private_bussiness
 WHERE personal_information.fullname_id = fullname.id
@@ -854,7 +858,7 @@ AND address.city = "Новосибирск"
 AND personal_information.id = private_bussiness.personal_information_id
 AND conscript.private_bussiness_id = private_bussiness.id;
 
-
+#список служащих сейчас призывников#
 SELECT conscript.id, fullname.firstname, fullname.secondname, fullname.surname, composition_of_conscription.date_of_enlistment
 FROM personal_information, fullname, conscript, private_bussiness, composition_of_conscription
 WHERE personal_information.fullname_id = fullname.id
@@ -863,6 +867,7 @@ AND conscript.private_bussiness_id = private_bussiness.id
 AND conscript.id = composition_of_conscription.conscript_id
 AND DATEDIFF(composition_of_conscription.date_of_enlistment, CURDATE()) < 365;
 
+#мед. заключение - ограниченно годен#
 SELECT conscript.id, fullname.firstname, fullname.secondname, fullname.surname, medical_status.status_name
 FROM personal_information, fullname, conscript, private_bussiness, medical_report, medical_status
 WHERE personal_information.fullname_id = fullname.id
@@ -871,13 +876,54 @@ AND conscript.private_bussiness_id = private_bussiness.id
 AND medical_report.medical_status_id = medical_status.id
 AND medical_status.status_name = "Ограниченно годен";
 
+#список призывников определенной возрастной группы#
 SELECT conscript.id, fullname.firstname, fullname.secondname, fullname.surname, personal_information.age
 FROM personal_information, fullname, conscript, private_bussiness
 WHERE personal_information.fullname_id = fullname.id
-AND personal_information.age BETWEEN 21 AND 25;
+AND personal_information.age BETWEEN 21 AND 25
+AND personal_information.id = private_bussiness.personal_information_id
+AND conscript.private_bussiness_id = private_bussiness.id;
 
+#родители определенного призывника#
+SELECT conscript.id, fullname.firstname, fullname.secondname, fullname.surname, personal_information_r.id, fullname_r.firstname, fullname_r.secondname, fullname_r.surname
+FROM personal_information, personal_information_r, family_composition, fullname_r, fullname, conscript, private_bussiness
+WHERE personal_information.id = 1
+AND personal_information.fullname_id = fullname.id
+AND personal_information.family_id = family_composition.family_id
+AND family_composition.relative_id = personal_information_r.id
+AND personal_information_r.fullname_id = fullname_r.id
+AND personal_information.id = private_bussiness.personal_information_id
+AND conscript.private_bussiness_id = private_bussiness.id
+AND family_composition.order_of_kinship = 2;
 
+#призывники с одинаковой датой рождения#
+SELECT conscript.id, fullname.firstname, fullname.secondname, fullname.surname,  personal_information.date_of_birth FROM personal_information, conscript, fullname, private_bussiness
+ WHERE personal_information.date_of_birth IN (
+    SELECT personal_information.date_of_birth FROM personal_information
+    GROUP BY date_of_birth HAVING count(*) > 1
+)
+AND personal_information.fullname_id = fullname.id
+AND personal_information.id = private_bussiness.personal_information_id
+AND conscript.private_bussiness_id = private_bussiness.id;
 
+#все призывники из определенной военной части#
+SELECT conscript.id, fullname.firstname, fullname.secondname, fullname.surname, military_unit.military_unit_id
+FROM personal_information, fullname, conscript, private_bussiness, conscription, composition_of_conscription, military_unit
+WHERE personal_information.fullname_id = fullname.id
+AND personal_information.id = private_bussiness.personal_information_id
+AND conscript.private_bussiness_id = private_bussiness.id
+AND conscript.id = composition_of_conscription.conscript_id
+AND conscription.id = composition_of_conscription.conscript_id
+AND conscription.military_unit_id = military_unit.id
+AND military_unit.military_unit_id = 41614;
+
+#вродственники с одинаковыми фамилиями#
+SELECT personal_information_r.id, fullname_r.firstname, fullname_r.secondname, fullname_r.surname FROM personal_information_r, fullname_r
+ WHERE fullname_r.secondname IN (
+    SELECT fullname_r.secondname FROM fullname_r
+    GROUP BY fullname_r.secondname HAVING count(*) > 1
+)
+AND personal_information_r.fullname_id = fullname_r.id;
 
 
 
