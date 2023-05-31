@@ -97,14 +97,10 @@ CREATE TABLE service_type (
     PRIMARY KEY(id)
 );
 
-#Адрес
-CREATE TABLE address (
+#Регион
+CREATE TABLE region (
 	id INT UNSIGNED AUTO_INCREMENT,
-    region VARCHAR(255) NOT NULL,
-    city VARCHAR(255) NOT NULL,
-    street VARCHAR(255) NOT NULL,
-    house_num SMALLINT UNSIGNED NOT NULL,
-    apartment_num SMALLINT UNSIGNED NOT NULL,
+    region_name VARCHAR(255) NOT NULL,
     PRIMARY KEY(id)
 );
 
@@ -209,6 +205,18 @@ CREATE TABLE employment (
     institution_id INT UNSIGNED NOT NULL,
     PRIMARY KEY(id),
     FOREIGN KEY (institution_id) REFERENCES institution (id) ON DELETE CASCADE
+);
+
+#Адрес
+CREATE TABLE address (
+	id INT UNSIGNED AUTO_INCREMENT,
+    region_id INT UNSIGNED NOT NULL,
+    city VARCHAR(255) NOT NULL,
+    street VARCHAR(255) NOT NULL,
+    house_num SMALLINT UNSIGNED NOT NULL,
+    apartment_num SMALLINT UNSIGNED NOT NULL,
+    PRIMARY KEY(id),
+    FOREIGN KEY (region_id) REFERENCES region (id) ON DELETE CASCADE
 );
 
 #Семья
@@ -624,6 +632,30 @@ DELIMITER ;
 
 ################################################# /Триггеры ################################################
 
+################################################## Функции #################################################
+
+# Вывести количество призывников, проходивших призыв в определенной военной части
+DELIMITER //
+CREATE FUNCTION  conscripts_number_in_military_unit(militaryUnitId INT UNSIGNED)
+RETURNS INT UNSIGNED
+READS SQL DATA
+DETERMINISTIC
+BEGIN
+	DECLARE count INT UNSIGNED;
+    SET count = (
+    SELECT COUNT(conscript.id) FROM conscript
+    INNER JOIN composition_of_conscription
+    ON composition_of_conscription.conscript_id = conscript.id
+    INNER JOIN conscription
+    ON composition_of_conscription.id = conscription.id 
+	WHERE conscription.military_unit_id = militaryUnitId
+    );
+    RETURN count;
+END//
+DELIMITER ;
+
+################################################# /Функции #################################################
+
 ######################################## Заполнение базовых таблиц #########################################
 
 #Заполнение табицы типов семей
@@ -663,6 +695,9 @@ INSERT INTO service_type (service_type_name) VALUES ('Срочная'), ('Кон
 
 #Заполнение табицы мед статус
 INSERT INTO medical_status (status_name) VALUES ('Годен'), ('Ограниченно годен'), ('Не годен');
+
+#Заполнение табицы регионов
+INSERT INTO region (region_name) VALUES ('Свердловская обл.'), ('Новосибирская обл'), ('Московская обл.'), ('Свердловская обл.'), ('Тюменская обл.'), ('Самарская обл.');
 
 ######################################## /Заполнение базовых таблиц ########################################
 
@@ -708,7 +743,7 @@ INSERT INTO fullname_r (firstname, secondname, surname) VALUES ('Аркадий'
 INSERT INTO fullname (firstname, secondname, surname) VALUES ('Андрей', 'Дмитиев', 'Аркадьевич');
 
 # Добавление адресов проживания
-INSERT INTO address (region, city, street, house_num, apartment_num) VALUES ('Свердловская обл.','Екатиринбург','Горького', 67, 104), ('Новосибирская обл.','Новосибирск','Гоголя', 6, 14);
+INSERT INTO address (region_id, city, street, house_num, apartment_num) VALUES (1,'Екатиринбург','Горького', 67, 104), (2,'Новосибирск','Гоголя', 6, 14);
 
 # Добавление персональных данных родственников
 INSERT INTO personal_information_r (fullname_id, date_of_birth, address_id, sex_id, nationality_id, education_id, age, criminal_record)
@@ -924,10 +959,5 @@ SELECT personal_information_r.id, fullname_r.firstname, fullname_r.secondname, f
     GROUP BY fullname_r.secondname HAVING count(*) > 1
 )
 AND personal_information_r.fullname_id = fullname_r.id;
-
-
-
-
-
 
 
