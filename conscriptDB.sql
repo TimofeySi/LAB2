@@ -351,6 +351,7 @@ CREATE TABLE composition_of_conscription (
     service_type_id INT UNSIGNED NOT NULL,
 	conscript_id INT UNSIGNED NOT NULL,                                                                                               
     date_of_enlistment DATE NOT NULL,          													                                               
+    end_date_of_enlistment DATE NOT NULL,          													                                               
     PRIMARY KEY(id),
     FOREIGN KEY (service_type_id) REFERENCES service_type (id) ON DELETE CASCADE,
     FOREIGN KEY (conscript_id) REFERENCES conscript (id) ON DELETE CASCADE                                        
@@ -654,6 +655,57 @@ BEGIN
 END//
 DELIMITER ;
 
+# Рассчитайте скользящее значение полностью прошедших военную службу призывников в мотострелковых войсках к 2021 году
+DELIMITER //
+CREATE FUNCTION  sliding_value()
+RETURNS FLOAT
+READS SQL DATA
+DETERMINISTIC
+BEGIN
+    RETURN (SELECT AVG((
+    SELECT COUNT(*) FROM conscript
+    INNER JOIN composition_of_conscription
+    ON composition_of_conscription.conscript_id = conscript.id
+	WHERE YEAR(composition_of_conscription.end_date_of_enlistment) < 2021
+    GROUP BY YEAR(composition_of_conscription.date_of_enlistment)
+    )));
+END//
+DELIMITER ;
+
+# Рассчитайте процент полностью здоровых призывников для каждого региона
+DELIMITER //
+CREATE PROCEDURE percentage_healthy_people_regions()
+BEGIN
+SELECT region.region_name region, (COUNT(IF(private_bussiness.category_id = 1, 1, NULL)) * 100 / COUNT(*)) healthy_conscripts_in_percents FROM private_bussiness
+    INNER JOIN personal_information
+    ON private_bussiness.personal_information_id = personal_information.id
+    INNER JOIN address
+    ON address.id = personal_information.address_id
+    INNER JOIN region
+    ON address.region_id = region.id
+    GROUP BY region_id;
+END //
+DELIMITER ;
+
+# Установите порядок призыва призывников в зависимости от их медицинского здоровья и судимостей их родственников.
+DELIMITER //
+CREATE PROCEDURE correct_calling_order()
+BEGIN
+	-- SELECT DISTINCT conscript.id, conscript.private_bussiness_id, conscript.military_id, conscript.title_id, conscript.type_of_army_id FROM conscript
+	
+    SELECT DISTINCT conscript.* FROM conscript
+    INNER JOIN private_bussiness
+    ON private_bussiness.id = conscript.private_bussiness_id
+    INNER JOIN personal_information
+    ON private_bussiness.personal_information_id = personal_information.id
+    INNER JOIN family_composition
+    ON family_composition.family_id = personal_information.family_id
+    INNER JOIN personal_information_r
+    ON family_composition.relative_id = personal_information_r.id
+    ORDER BY private_bussiness.category_id ASC, personal_information_r.criminal_record ASC;
+END //
+DELIMITER ;
+
 ################################################# /Функции #################################################
 
 ######################################## Заполнение базовых таблиц #########################################
@@ -847,11 +899,12 @@ VALUES (
     (SELECT id FROM season WHERE season_name='Весна'),
     2022
 );
-INSERT INTO composition_of_conscription (service_type_id, conscript_id, date_of_enlistment) 
+INSERT INTO composition_of_conscription (service_type_id, conscript_id, date_of_enlistment, end_date_of_enlistment) 
 VALUES (
 	(SELECT id FROM conscription WHERE id=1),
     (SELECT id FROM service_type WHERE service_type_name='Срочная'),
-    '2022-09-20'
+    '2022-09-20',
+    '2023-09-20'
 );
 ##################################### /Шаблон для добавления призывника ####################################
 
@@ -988,5 +1041,8 @@ AND conscript.private_bussiness_id = private_bussiness.id
 AND family_composition.order_of_kinship = 2;*/
 
 
+CALL percentage_healthy_people_regions();
 
+SELECT sliding_value();
 
+CALL correct_calling_order();
