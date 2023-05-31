@@ -856,10 +856,11 @@ VALUES (
 ##################################### /Шаблон для добавления призывника ####################################
 
 #список всех призывников#
-SELECT conscript.id, fullname.firstname, fullname.secondname, fullname.surname, sex.sex_name, personal_information.age, address.region, address.city, address.street, address.house_num, address.apartment_num
-FROM conscript, private_bussiness, personal_information, fullname, address, sex
+SELECT conscript.id, fullname.firstname, fullname.secondname, fullname.surname, sex.sex_name, personal_information.age, region.region_name, address.city, address.street, address.house_num, address.apartment_num
+FROM conscript, private_bussiness, personal_information, fullname, address, sex, region
 WHERE personal_information.fullname_id = fullname.id
 AND personal_information.address_id = address.id
+AND address.region_id = region.id
 AND personal_information.sex_id = sex.id
 AND personal_information.id = private_bussiness.personal_information_id
 AND conscript.private_bussiness_id = private_bussiness.id;
@@ -952,12 +953,40 @@ AND conscription.id = composition_of_conscription.conscript_id
 AND conscription.military_unit_id = military_unit.id
 AND military_unit.military_unit_id = 41614;
 
-#вродственники с одинаковыми фамилиями#
+#родственники с одинаковыми фамилиями#
 SELECT personal_information_r.id, fullname_r.firstname, fullname_r.secondname, fullname_r.surname FROM personal_information_r, fullname_r
  WHERE fullname_r.secondname IN (
     SELECT fullname_r.secondname FROM fullname_r
     GROUP BY fullname_r.secondname HAVING count(*) > 1
 )
 AND personal_information_r.fullname_id = fullname_r.id;
+
+#список призывников из определенного областного центра#
+SELECT conscript.id, fullname.firstname, fullname.secondname, fullname.surname, region.region_name
+FROM conscript, private_bussiness, personal_information, fullname, address, region
+WHERE personal_information.fullname_id = fullname.id
+AND personal_information.address_id = address.id
+AND address.region_id = region.id
+AND region.region_name = "Новосибирская обл"
+AND personal_information.id = private_bussiness.personal_information_id
+AND conscript.private_bussiness_id = private_bussiness.id;
+
+/*#список родственников определенного призывника с одинаковой датой рождения#
+SELECT conscript.id, fullname.firstname, fullname.secondname, fullname.surname, personal_information_r.id, fullname_r.firstname, fullname_r.secondname, fullname_r.surname, personal_information_r.date_of_birth
+FROM personal_information, personal_information_r, family_composition, fullname_r, fullname, conscript, private_bussiness
+ WHERE personal_information_r.date_of_birth IN (
+    SELECT DAYOFMONTH(personal_information_r.date_of_birth) FROM personal_information_r
+    GROUP BY DAYOFMONTH(personal_information_r.date_of_birth) HAVING count(*) > 1
+)
+AND personal_information.id = 1
+AND personal_information.fullname_id = fullname.id
+AND personal_information.family_id = family_composition.family_id
+AND family_composition.relative_id = personal_information_r.id
+AND personal_information_r.fullname_id = fullname_r.id
+AND personal_information.id = private_bussiness.personal_information_id
+AND conscript.private_bussiness_id = private_bussiness.id
+AND family_composition.order_of_kinship = 2;*/
+
+
 
 
