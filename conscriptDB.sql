@@ -342,7 +342,7 @@ CREATE TABLE composition_of_conscription (
 	id INT UNSIGNED AUTO_INCREMENT,
     service_type_id INT UNSIGNED NOT NULL,
 	conscript_id INT UNSIGNED NOT NULL,                                                                                               
-    date_of_enlistment DATETIME NOT NULL,          													                                               
+    date_of_enlistment DATE NOT NULL,          													                                               
     PRIMARY KEY(id),
     FOREIGN KEY (service_type_id) REFERENCES service_type (id) ON DELETE CASCADE,
     FOREIGN KEY (conscript_id) REFERENCES conscript (id) ON DELETE CASCADE                                        
@@ -811,19 +811,77 @@ VALUES (
     (SELECT id FROM season WHERE season_name='Весна'),
     2022
 );
-
+INSERT INTO composition_of_conscription (service_type_id, conscript_id, date_of_enlistment) 
+VALUES (
+	(SELECT id FROM conscription WHERE id=1),
+    (SELECT id FROM service_type WHERE service_type_name='Срочная'),
+    '2022-09-20'
+);
 ##################################### /Шаблон для добавления призывника ####################################
 
-SELECT * FROM medical_report;
-SELECT * FROM private_bussiness;
+SELECT conscript.id, fullname.firstname, fullname.secondname, fullname.surname, sex.sex_name, personal_information.age, address.region, address.city, address.street, address.house_num, address.apartment_num
+FROM conscript, private_bussiness, personal_information, fullname, address, sex
+WHERE personal_information.fullname_id = fullname.id
+AND personal_information.address_id = address.id
+AND personal_information.sex_id = sex.id
+AND personal_information.id = private_bussiness.personal_information_id
+AND conscript.private_bussiness_id = private_bussiness.id;
 
-SELECT * FROM surgeon;
-SELECT * FROM psychiatrist;
-SELECT * FROM therapist;
-SELECT * FROM neurologist;
-SELECT * FROM ophthalmologist;
-SELECT * FROM dentist;
-SELECT * FROM otorhinolaryngologist;
+SELECT conscript.id, fullname.firstname, fullname.secondname, fullname.surname, medical_status.status_name
+FROM personal_information, medical_report, medical_status, private_bussiness, fullname, conscript
+WHERE personal_information.fullname_id = fullname.id
+AND personal_information.id = private_bussiness.personal_information_id
+AND private_bussiness.medical_report_id = medical_report.id
+AND medical_report.medical_status_id = medical_status.id
+AND conscript.private_bussiness_id = private_bussiness.id;
 
-SELECT * FROM family;
-SELECT * FROM family_composition;
+SELECT conscript.id, fullname.firstname, fullname.secondname, fullname.surname, personal_information_r.id, fullname_r.firstname, fullname_r.secondname, fullname_r.surname
+FROM personal_information, personal_information_r, family_composition, fullname_r, fullname, conscript, private_bussiness
+WHERE personal_information.id = 1
+AND personal_information.fullname_id = fullname.id
+AND personal_information.family_id = family_composition.family_id
+AND family_composition.relative_id = personal_information_r.id
+AND personal_information_r.fullname_id = fullname_r.id
+AND personal_information.id = private_bussiness.personal_information_id
+AND conscript.private_bussiness_id = private_bussiness.id;
+
+
+SELECT conscript.id, fullname.firstname, fullname.secondname, fullname.surname, address.city
+FROM personal_information, address, fullname, conscript, private_bussiness
+WHERE personal_information.fullname_id = fullname.id
+AND personal_information.address_id = address.id
+AND address.city = "Новосибирск"
+AND personal_information.id = private_bussiness.personal_information_id
+AND conscript.private_bussiness_id = private_bussiness.id;
+
+
+SELECT conscript.id, fullname.firstname, fullname.secondname, fullname.surname, composition_of_conscription.date_of_enlistment
+FROM personal_information, fullname, conscript, private_bussiness, composition_of_conscription
+WHERE personal_information.fullname_id = fullname.id
+AND personal_information.id = private_bussiness.personal_information_id
+AND conscript.private_bussiness_id = private_bussiness.id
+AND conscript.id = composition_of_conscription.conscript_id
+AND DATEDIFF(composition_of_conscription.date_of_enlistment, CURDATE()) < 365;
+
+SELECT conscript.id, fullname.firstname, fullname.secondname, fullname.surname, medical_status.status_name
+FROM personal_information, fullname, conscript, private_bussiness, medical_report, medical_status
+WHERE personal_information.fullname_id = fullname.id
+AND personal_information.id = private_bussiness.personal_information_id
+AND conscript.private_bussiness_id = private_bussiness.id
+AND medical_report.medical_status_id = medical_status.id
+AND medical_status.status_name = "Ограниченно годен";
+
+SELECT conscript.id, fullname.firstname, fullname.secondname, fullname.surname, personal_information.age
+FROM personal_information, fullname, conscript, private_bussiness
+WHERE personal_information.fullname_id = fullname.id
+AND personal_information.age BETWEEN 21 AND 25;
+
+
+
+
+
+
+
+
+
+
