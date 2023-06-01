@@ -697,9 +697,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE correct_calling_order()
 BEGIN
-	-- SELECT DISTINCT conscript.id, conscript.private_bussiness_id, conscript.military_id, conscript.title_id, conscript.type_of_army_id FROM conscript
-	
-    SELECT DISTINCT conscript.* FROM conscript
+    SELECT id, private_bussiness_id, military_id, title_id, type_of_army_id FROM (SELECT DISTINCT conscript.*, private_bussiness.category_id AS hidden_column1, personal_information_r.criminal_record AS hidden_column2 FROM conscript
     INNER JOIN private_bussiness
     ON private_bussiness.id = conscript.private_bussiness_id
     INNER JOIN personal_information
@@ -708,7 +706,7 @@ BEGIN
     ON family_composition.family_id = personal_information.family_id
     INNER JOIN personal_information_r
     ON family_composition.relative_id = personal_information_r.id
-    ORDER BY private_bussiness.category_id ASC, personal_information_r.criminal_record ASC;
+    ORDER BY private_bussiness.category_id ASC, personal_information_r.criminal_record ASC) AS T;
 END //
 DELIMITER ;
 
