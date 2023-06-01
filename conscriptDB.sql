@@ -334,13 +334,11 @@ CREATE TABLE private_bussiness (
 #Призывник
 CREATE TABLE conscript (
 	id INT UNSIGNED AUTO_INCREMENT,
-    private_bussiness_id INT UNSIGNED NOT NULL,
-	military_id INT UNSIGNED NOT NULL,                                                      
+    private_bussiness_id INT UNSIGNED NOT NULL,                                                    
     title_id INT UNSIGNED NOT NULL,                                                
     type_of_army_id INT UNSIGNED NOT NULL,
     PRIMARY KEY(id),
-    FOREIGN KEY (private_bussiness_id) REFERENCES private_bussiness (id) ON DELETE CASCADE,
-    FOREIGN KEY (military_id) REFERENCES military_id (id) ON DELETE CASCADE,                                     
+    FOREIGN KEY (private_bussiness_id) REFERENCES private_bussiness (id) ON DELETE CASCADE,                                   
     FOREIGN KEY (title_id) REFERENCES title (id) ON DELETE CASCADE,                     
     FOREIGN KEY (type_of_army_id) REFERENCES type_of_army (id) ON DELETE CASCADE
 );
@@ -356,7 +354,15 @@ CREATE TABLE composition_of_conscription (
     FOREIGN KEY (service_type_id) REFERENCES service_type (id) ON DELETE CASCADE,
     FOREIGN KEY (conscript_id) REFERENCES conscript (id) ON DELETE CASCADE                                        
 );
-
+#Выданные билеты
+CREATE TABLE issued_military_id (
+	id INT UNSIGNED AUTO_INCREMENT,
+    military_id INT UNSIGNED NOT NULL,
+	conscript_id INT UNSIGNED NOT NULL,                                                                                                      													                                               
+    PRIMARY KEY(id),
+    FOREIGN KEY (military_id) REFERENCES military_id (id) ON DELETE CASCADE,
+    FOREIGN KEY (conscript_id) REFERENCES conscript (id) ON DELETE CASCADE                                        
+);
 ################################# /Таблицы с множественными зависимостями ##################################
 
 ############################################# /Создание таблиц #############################################
@@ -720,7 +726,7 @@ INSERT INTO category (category_name) VALUES ('А'), ('Б'), ('В'), ('Г'), ('Д
 INSERT INTO sex (sex_name) VALUES ('МУЖ'), ('ЖЕН');
 
 #Заполнение табицы званий
-INSERT INTO title (rank_name) VALUES 	('Рядовой'), ('Ефрейтор') , ('Младший сержант'), ('Сержант'), ('Старший сержант'), ('Старшина'), ('Прапорщик'), 
+INSERT INTO title (rank_name) VALUES 	('Нет'), ('Рядовой'), ('Ефрейтор') , ('Младший сержант'), ('Сержант'), ('Старший сержант'), ('Старшина'), ('Прапорщик'), 
 										('Старший прапорщик'), ('Младший лейтинант'), ('Лейтинант'), ('Старший лейтинант'), ('Капитан'), ('Майор'), ('Подполковник'), ('Полковник'), ('Генерал майор'), 
 										('Генерал лейтинант'), ('Генерал лейтинант'), ('Генерал полковник'), ('Генерал армии'), ('Маршал России');
  
@@ -789,19 +795,19 @@ INSERT INTO employment (institution_id) VALUES ((SELECT id FROM institution WHER
 INSERT INTO military_unit (military_unit_id) VALUES (41614);
 
 # Добавление имён родственников
-INSERT INTO fullname_r (firstname, secondname, surname) VALUES ('Аркадий', 'Дмитиев', 'Витальевич'), ('Алиса', 'Дмитиева', 'Юрьевна'), ('Виталий', 'Дмитиев', 'Аркадьевич');
+INSERT INTO fullname_r (firstname, secondname, surname) VALUES ('Аркадий', 'Дмитиев(-а)', 'Витальевич'), ('Алиса', 'Дмитиев(-а)', 'Юрьевна'), ('Виталий', 'Дмитиев(-а)', 'Аркадьевич');
 
 # Добавление имени призывника
-INSERT INTO fullname (firstname, secondname, surname) VALUES ('Андрей', 'Дмитиев', 'Аркадьевич');
+INSERT INTO fullname (firstname, secondname, surname) VALUES ('Андрей', 'Дмитиев(-а)', 'Аркадьевич');
 
 # Добавление адресов проживания
-INSERT INTO address (region_id, city, street, house_num, apartment_num) VALUES (1,'Екатиринбург','Горького', 67, 104), (2,'Новосибирск','Гоголя', 6, 14);
+INSERT INTO address (region_id, city, street, house_num, apartment_num) VALUES (1,'Екатеринбург','Горького', 67, 104), (2,'Новосибирск','Гоголя', 6, 14);
 
 # Добавление персональных данных родственников
 INSERT INTO personal_information_r (fullname_id, date_of_birth, address_id, sex_id, nationality_id, education_id, age, criminal_record)
 VALUES 
 (
-	(SELECT id FROM fullname_r WHERE firstname='Аркадий' AND secondname='Дмитиев' AND surname='Витальевич' ORDER BY id DESC LIMIT 1),
+	(SELECT id FROM fullname_r WHERE firstname='Аркадий' AND secondname='Дмитиев(-а)' AND surname='Витальевич' ORDER BY id DESC LIMIT 1),
 	'1975-04-04',
 	(SELECT id FROM address WHERE city='Новосибирск' AND street='Гоголя' AND house_num=6 AND apartment_num=14 ORDER BY id DESC LIMIT 1),
 	(SELECT id FROM sex WHERE sex_name='МУЖ'),
@@ -811,9 +817,9 @@ VALUES
 	FALSE
 ),
 (
-	(SELECT id FROM fullname_r WHERE firstname='Виталий' AND secondname='Дмитиев' AND surname='Аркадьевич' ORDER BY id DESC LIMIT 1),
+	(SELECT id FROM fullname_r WHERE firstname='Виталий' AND secondname='Дмитиев(-а)' AND surname='Аркадьевич' ORDER BY id DESC LIMIT 1),
 	'2003-04-09',
-	(SELECT id FROM address WHERE city='Екатиринбург' AND street='Горького' AND house_num=67 AND apartment_num=104 ORDER BY id DESC LIMIT 1),
+	(SELECT id FROM address WHERE city='Екатеринбург' AND street='Горького' AND house_num=67 AND apartment_num=104 ORDER BY id DESC LIMIT 1),
 	(SELECT id FROM sex WHERE sex_name='МУЖ'),
 	(SELECT id FROM nationality WHERE nationality_name='Русский'),
 	(SELECT id FROM education WHERE education_name='Среднее общее'),
@@ -821,7 +827,7 @@ VALUES
 	FALSE
 ),
 (
-	(SELECT id FROM fullname_r WHERE firstname='Алиса' AND secondname='Дмитиева' AND surname='Юрьевна' ORDER BY id DESC LIMIT 1),
+	(SELECT id FROM fullname_r WHERE firstname='Алиса' AND secondname='Дмитиев(-а)' AND surname='Юрьевна' ORDER BY id DESC LIMIT 1),
 	'1980-04-21',
 	(SELECT id FROM address WHERE city='Новосибирск' AND street='Гоголя' AND house_num=6 AND apartment_num=14 ORDER BY id DESC LIMIT 1),
 	(SELECT id FROM sex WHERE sex_name='ЖЕН'),
@@ -839,21 +845,21 @@ INSERT INTO family_composition (family_id, kinship_id, relative_id, order_of_kin
 VALUES 
 (
 	1, -- (SELECT id FROM family ORDER BY id DESC LIMIT 1)
-	(SELECT id FROM kinship WHERE kinship_name='Кровное'),
-	(SELECT pi.id FROM personal_information_r pi INNER JOIN fullname_r fn ON fn.id=pi.fullname_id WHERE firstname='Аркадий' AND secondname='Дмитиев' AND surname='Витальевич' ORDER BY pi.id DESC LIMIT 1),
-    2
-),
-(
-	1, -- (SELECT id FROM family ORDER BY id DESC LIMIT 1)
-	(SELECT id FROM kinship WHERE kinship_name='Кровное'),
-	(SELECT pi.id FROM personal_information_r pi INNER JOIN fullname_r fn ON fn.id=pi.fullname_id WHERE firstname='Алиса' AND secondname='Дмитиева' AND surname='Юрьевна' ORDER BY pi.id DESC LIMIT 1),
-    2
-),
-(
-	1, -- (SELECT id FROM family ORDER BY id DESC LIMIT 1)
-	(SELECT id FROM kinship WHERE kinship_name='Кровное'),
-	(SELECT pi.id FROM personal_information_r pi INNER JOIN fullname_r fn ON fn.id=pi.fullname_id WHERE firstname='Виталий' AND secondname='Дмитиев' AND surname='Аркадьевич' ORDER BY pi.id DESC LIMIT 1),
+	(SELECT id FROM kinship WHERE kinship_name='Не кровное'),
+	(SELECT pi.id FROM personal_information_r pi INNER JOIN fullname_r fn ON fn.id=pi.fullname_id WHERE firstname='Аркадий' AND secondname='Дмитиев(-а)' AND surname='Витальевич' ORDER BY pi.id DESC LIMIT 1),
     1
+),
+(
+	1, -- (SELECT id FROM family ORDER BY id DESC LIMIT 1)
+	(SELECT id FROM kinship WHERE kinship_name='Кровное'),
+	(SELECT pi.id FROM personal_information_r pi INNER JOIN fullname_r fn ON fn.id=pi.fullname_id WHERE firstname='Алиса' AND secondname='Дмитиев(-а)' AND surname='Юрьевна' ORDER BY pi.id DESC LIMIT 1),
+    1
+),
+(
+	1, -- (SELECT id FROM family ORDER BY id DESC LIMIT 1)
+	(SELECT id FROM kinship WHERE kinship_name='Кровное'),
+	(SELECT pi.id FROM personal_information_r pi INNER JOIN fullname_r fn ON fn.id=pi.fullname_id WHERE firstname='Виталий' AND secondname='Дмитиев(-а)' AND surname='Аркадьевич' ORDER BY pi.id DESC LIMIT 1),
+    2
 );
 
 # Персональные данные призывника
@@ -861,7 +867,7 @@ INSERT INTO personal_information (fullname_id, date_of_birth, address_id, family
 VALUES 
 (
 
-	(SELECT id FROM fullname WHERE firstname='Андрей' AND secondname='Дмитиев' AND surname='Аркадьевич' ORDER BY id DESC LIMIT 1),
+	(SELECT id FROM fullname WHERE firstname='Андрей' AND secondname='Дмитиев(-а)' AND surname='Аркадьевич' ORDER BY id DESC LIMIT 1),
 	'1999-04-01',
 	(SELECT id FROM address WHERE city='Новосибирск' AND street='Гоголя' AND house_num=6 AND apartment_num=14 ORDER BY id DESC LIMIT 1),
     (SELECT id FROM family_status WHERE family_status_name='Одинок(-а)'),
@@ -885,10 +891,9 @@ VALUES
 );
 
 # Призывник
-INSERT INTO conscript (private_bussiness_id, military_id, title_id, type_of_army_id) 
+INSERT INTO conscript (private_bussiness_id, title_id, type_of_army_id) 
 VALUES (
-	(SELECT pb.id FROM private_bussiness pb INNER JOIN personal_information pi ON pi.id=personal_information_id INNER JOIN fullname ON fullname.id=fullname_id WHERE firstname='Андрей' AND secondname='Дмитиев' AND surname='Аркадьевич' ORDER BY id DESC LIMIT 1),
-	(SELECT id FROM military_id WHERE series='АБ' AND num=1111111),
+	(SELECT pb.id FROM private_bussiness pb INNER JOIN personal_information pi ON pi.id=personal_information_id INNER JOIN fullname ON fullname.id=fullname_id WHERE firstname='Андрей' AND secondname='Дмитиев(-а)' AND surname='Аркадьевич' ORDER BY id DESC LIMIT 1),
     (SELECT id FROM title WHERE rank_name='Рядовой'),
     (SELECT id FROM type_of_army WHERE typename='ВВС')
 );
@@ -901,7 +906,174 @@ VALUES (
 );
 INSERT INTO composition_of_conscription (service_type_id, conscript_id, date_of_enlistment, end_date_of_enlistment) 
 VALUES (
-	(SELECT id FROM conscription WHERE id=1),
+	(SELECT id FROM conscript WHERE id=1),
+    (SELECT id FROM service_type WHERE service_type_name='Срочная'),
+    '2022-09-20', 
+    '2023-09-20'
+);
+INSERT INTO issued_military_id (military_id, conscript_id) 
+VALUES (
+	(SELECT id FROM conscript WHERE id=1),
+    (SELECT id FROM military_id WHERE id = 1)
+);
+##################################### /Шаблон для добавления призывника ####################################
+
+# Добавление врачей с заключениями
+INSERT INTO surgeon (conclusion_id) VALUES (DEFAULT);
+INSERT INTO psychiatrist (conclusion_id) VALUES (DEFAULT);
+INSERT INTO therapist (conclusion_id) VALUES (DEFAULT);
+INSERT INTO neurologist (conclusion_id) VALUES (DEFAULT);
+INSERT INTO dentist (conclusion_id) VALUES (DEFAULT);
+INSERT INTO otorhinolaryngologist (conclusion_id) VALUES (DEFAULT);
+INSERT INTO ophthalmologist (conclusion_id) VALUES (DEFAULT);
+
+# Формирование мед заключения
+INSERT INTO medical_report (surgeon_id, psychiatrist_id, therapist_id, neurologist_id, dentist_id, otorhinolaryngologist_id, ophthalmologist_id)
+VALUES (
+(SELECT id FROM surgeon ORDER BY id DESC LIMIT 1), 											# Вместо запроса можно вставить id желаемого врача
+(SELECT id FROM psychiatrist ORDER BY id DESC LIMIT 1),
+(SELECT id FROM therapist ORDER BY id DESC LIMIT 1),
+(SELECT id FROM neurologist ORDER BY id DESC LIMIT 1),
+(SELECT id FROM dentist ORDER BY id DESC LIMIT 1),
+(SELECT id FROM otorhinolaryngologist ORDER BY id DESC LIMIT 1),
+(SELECT id FROM ophthalmologist ORDER BY id DESC LIMIT 1)
+);
+
+# Добавление рабочего(образовательного) учреждения 
+INSERT INTO institution (inst_name, state_accreditation, field_of_activity) VALUES ('Yagle', False, 'IT');
+
+# Создание строки занятости призывника
+INSERT INTO employment (institution_id) VALUES ((SELECT id FROM institution WHERE inst_name='Yagle' ORDER BY id DESC LIMIT 1));
+
+# Добавление имён родственников
+INSERT INTO fullname_r (firstname, secondname, surname) VALUES ('Петр', 'Коробков(-а)', 'Витальевич'), ('Татьяна', 'Коробков(-а)', 'Юрьевна'), ('Ксения', 'Коробков(-а)', 'Петровна'), ('Юлия', 'Коробков(-а)', 'Петровна');
+
+# Добавление имени призывника
+INSERT INTO fullname (firstname, secondname, surname) VALUES ('Михаил', 'Коробков(-а)', 'Петрович');
+
+# Добавление адресов проживания
+INSERT INTO address (region_id, city, street, house_num, apartment_num) VALUES (2,'Новосибирск','Ленина', 6, 14);
+
+# Добавление персональных данных родственников
+INSERT INTO personal_information_r (fullname_id, date_of_birth, address_id, sex_id, nationality_id, education_id, age, criminal_record)
+VALUES 
+(
+	(SELECT id FROM fullname_r WHERE firstname='Петр' AND secondname='Коробков(-а)' AND surname='Витальевич' ORDER BY id DESC LIMIT 1),
+	'1983-04-04',
+	(SELECT id FROM address WHERE city='Новосибирск' AND street='Ленина' AND house_num=6 AND apartment_num=14 ORDER BY id DESC LIMIT 1),
+	(SELECT id FROM sex WHERE sex_name='МУЖ'),
+	(SELECT id FROM nationality WHERE nationality_name='Казах'),
+	(SELECT id FROM education WHERE education_name='Высшее'),
+	40,
+	FALSE
+),
+(
+	(SELECT id FROM fullname_r WHERE firstname='Ксения' AND secondname='Коробков(-а)' AND surname='Петровна' ORDER BY id DESC LIMIT 1),
+	'2005-04-09',
+	(SELECT id FROM address WHERE city='Новосибирск' AND street='Ленина' AND house_num=6 AND apartment_num=14 ORDER BY id DESC LIMIT 1),
+	(SELECT id FROM sex WHERE sex_name='ЖЕН'),
+	(SELECT id FROM nationality WHERE nationality_name='Русский'),
+	(SELECT id FROM education WHERE education_name='Основное общее'),
+	18,
+	FALSE
+),
+(
+	(SELECT id FROM fullname_r WHERE firstname='Юлия' AND secondname='Коробков(-а)' AND surname='Петровна' ORDER BY id DESC LIMIT 1),
+	'2005-04-09',
+	(SELECT id FROM address WHERE city='Новосибирск' AND street='Ленина' AND house_num=6 AND apartment_num=14 ORDER BY id DESC LIMIT 1),
+	(SELECT id FROM sex WHERE sex_name='ЖЕН'),
+	(SELECT id FROM nationality WHERE nationality_name='Русский'),
+	(SELECT id FROM education WHERE education_name='Основное общее'),
+	18,
+	FALSE
+),
+(
+	(SELECT id FROM fullname_r WHERE firstname='Татьяна' AND secondname='Коробков(-а)' AND surname='Юрьевна' ORDER BY id DESC LIMIT 1),
+	'1984-04-21',
+	(SELECT id FROM address WHERE city='Новосибирск' AND street='Ленина' AND house_num=6 AND apartment_num=14 ORDER BY id DESC LIMIT 1),
+	(SELECT id FROM sex WHERE sex_name='ЖЕН'),
+	(SELECT id FROM nationality WHERE nationality_name='Русский'),
+	(SELECT id FROM education WHERE education_name='Среднее общее'),
+	39,
+	FALSE
+);
+
+# Заполнение таблицы семья
+INSERT INTO family (family_type_id) VALUES (DEFAULT);
+
+#
+INSERT INTO family_composition (family_id, kinship_id, relative_id, order_of_kinship)
+VALUES 
+(
+	2, -- (SELECT id FROM family ORDER BY id DESC LIMIT 1)
+	(SELECT id FROM kinship WHERE kinship_name='Кровное'),
+	(SELECT pi.id FROM personal_information_r pi INNER JOIN fullname_r fn ON fn.id=pi.fullname_id WHERE firstname='Петр' AND secondname='Коробков(-а)' AND surname='Витальевич' ORDER BY pi.id DESC LIMIT 1),
+    1
+),
+(
+	2, -- (SELECT id FROM family ORDER BY id DESC LIMIT 1)
+	(SELECT id FROM kinship WHERE kinship_name='Кровное'),
+	(SELECT pi.id FROM personal_information_r pi INNER JOIN fullname_r fn ON fn.id=pi.fullname_id WHERE firstname='Татьяна' AND secondname='Коробков(-а)' AND surname='Юрьевна' ORDER BY pi.id DESC LIMIT 1),
+    1
+),
+(
+	2, -- (SELECT id FROM family ORDER BY id DESC LIMIT 1)
+	(SELECT id FROM kinship WHERE kinship_name='Кровное'),
+	(SELECT pi.id FROM personal_information_r pi INNER JOIN fullname_r fn ON fn.id=pi.fullname_id WHERE firstname='Ксения' AND secondname='Коробков(-а)' AND surname='Петровна' ORDER BY pi.id DESC LIMIT 1),
+    2
+),
+(
+	2, -- (SELECT id FROM family ORDER BY id DESC LIMIT 1)
+	(SELECT id FROM kinship WHERE kinship_name='Кровное'),
+	(SELECT pi.id FROM personal_information_r pi INNER JOIN fullname_r fn ON fn.id=pi.fullname_id WHERE firstname='Юлия' AND secondname='Коробков(-а)' AND surname='Петровна' ORDER BY pi.id DESC LIMIT 1),
+    2
+);
+
+# Персональные данные призывника
+INSERT INTO personal_information (fullname_id, date_of_birth, address_id, family_status_id, family_id, sex_id, nationality_id, employment_id, age, criminal_record)
+VALUES 
+(
+
+	(SELECT id FROM fullname WHERE firstname='Михаил' AND secondname='Коробков(-а)' AND surname='Петрович' ORDER BY id DESC LIMIT 1),
+	'1999-04-01',
+	(SELECT id FROM address WHERE city='Новосибирск' AND street='Ленина' AND house_num=6 AND apartment_num=14 ORDER BY id DESC LIMIT 1),
+    (SELECT id FROM family_status WHERE family_status_name='Одинок(-а)'),
+	(SELECT id FROM family ORDER BY id DESC LIMIT 1),
+	(SELECT id FROM sex WHERE sex_name='МУЖ'),
+	(SELECT id FROM nationality WHERE nationality_name='Русский'),
+	(SELECT id FROM employment ORDER BY id DESC LIMIT 1),
+	24,
+	FALSE
+);
+
+
+# Личное дело призыника
+INSERT INTO private_bussiness (personal_information_id, medical_report_id, date_of_registration, deregistration_date)
+VALUES 
+(
+		(SELECT id FROM personal_information ORDER BY id DESC LIMIT 1),
+		(SELECT id FROM medical_report ORDER BY id DESC LIMIT 1),
+        '2022-04-01',
+        '2023-05-01'
+);
+
+# Призывник
+INSERT INTO conscript (private_bussiness_id, title_id, type_of_army_id) 
+VALUES (
+	(SELECT pb.id FROM private_bussiness pb INNER JOIN personal_information pi ON pi.id=personal_information_id INNER JOIN fullname ON fullname.id=fullname_id WHERE firstname='Михаил' AND secondname='Коробков(-а)' AND surname='Петрович' ORDER BY id DESC LIMIT 1),
+    (SELECT id FROM title WHERE rank_name='Нет'),
+    (SELECT id FROM type_of_army WHERE typename='ВВС')
+);
+
+INSERT INTO conscription (military_unit_id, season_id, conscription_year) 
+VALUES (
+	(SELECT id FROM military_unit WHERE military_unit_id=41614),
+    (SELECT id FROM season WHERE season_name='Весна'),
+    2022
+);
+INSERT INTO composition_of_conscription (service_type_id, conscript_id, date_of_enlistment, end_date_of_enlistment) 
+VALUES (
+	(SELECT id FROM conscript WHERE id=1),
     (SELECT id FROM service_type WHERE service_type_name='Срочная'),
     '2022-09-20',
     '2023-09-20'
@@ -954,7 +1126,8 @@ WHERE personal_information.fullname_id = fullname.id
 AND personal_information.id = private_bussiness.personal_information_id
 AND conscript.private_bussiness_id = private_bussiness.id
 AND conscript.id = composition_of_conscription.conscript_id
-AND DATEDIFF(composition_of_conscription.date_of_enlistment, CURDATE()) < 365;
+AND composition_of_conscription.end_date_of_enlistment > CURDATE();
+#AND DATEDIFF(composition_of_conscription.date_of_enlistment, CURDATE()) < 365;
 
 #мед. заключение - ограниченно годен#
 SELECT conscript.id, fullname.firstname, fullname.secondname, fullname.surname, medical_status.status_name
@@ -983,7 +1156,7 @@ AND family_composition.relative_id = personal_information_r.id
 AND personal_information_r.fullname_id = fullname_r.id
 AND personal_information.id = private_bussiness.personal_information_id
 AND conscript.private_bussiness_id = private_bussiness.id
-AND family_composition.order_of_kinship = 2;
+AND family_composition.order_of_kinship = 1;
 
 #призывники с одинаковой датой рождения#
 SELECT conscript.id, fullname.firstname, fullname.secondname, fullname.surname,  personal_information.date_of_birth FROM personal_information, conscript, fullname, private_bussiness
@@ -1024,21 +1197,129 @@ AND region.region_name = "Новосибирская обл"
 AND personal_information.id = private_bussiness.personal_information_id
 AND conscript.private_bussiness_id = private_bussiness.id;
 
-/*#список родственников определенного призывника с одинаковой датой рождения#
+
+#список родственников определенного призывника с одинаковой датой рождения#
 SELECT conscript.id, fullname.firstname, fullname.secondname, fullname.surname, personal_information_r.id, fullname_r.firstname, fullname_r.secondname, fullname_r.surname, personal_information_r.date_of_birth
 FROM personal_information, personal_information_r, family_composition, fullname_r, fullname, conscript, private_bussiness
  WHERE personal_information_r.date_of_birth IN (
-    SELECT DAYOFMONTH(personal_information_r.date_of_birth) FROM personal_information_r
-    GROUP BY DAYOFMONTH(personal_information_r.date_of_birth) HAVING count(*) > 1
+    SELECT personal_information_r.date_of_birth FROM personal_information_r
+    GROUP BY personal_information_r.date_of_birth HAVING count(*) > 1
 )
-AND personal_information.id = 1
+AND personal_information.id = 2
+AND personal_information.fullname_id = fullname.id
+AND personal_information.family_id = family_composition.family_id
+AND family_composition.relative_id = personal_information_r.id
+AND personal_information_r.fullname_id = fullname_r.id
+AND personal_information.id = private_bussiness.personal_information_id
+AND conscript.private_bussiness_id = private_bussiness.id;
+
+#призывники срочной военной службы в определенном году#
+SELECT conscript.id, fullname.firstname, fullname.secondname, fullname.surname, conscription.conscription_year, service_type.service_type_name
+FROM personal_information, fullname, conscript, private_bussiness, composition_of_conscription, conscription, service_type
+WHERE personal_information.fullname_id = fullname.id
+AND personal_information.id = private_bussiness.personal_information_id
+AND conscript.private_bussiness_id = private_bussiness.id
+AND conscript.id = composition_of_conscription.conscript_id
+AND conscription.id = composition_of_conscription.conscript_id
+AND composition_of_conscription.service_type_id = service_type.id
+AND service_type.service_type_name = "Срочная"
+AND conscription.conscription_year = 2022;
+
+#список родственников с одинаковым адресом проживания#
+SELECT personal_information_r.id, fullname_r.firstname, fullname_r.secondname, fullname_r.surname, region.region_name, address.city, address.street, address.house_num, address.apartment_num FROM personal_information_r, fullname_r, address, region
+ WHERE personal_information_r.address_id IN (
+    SELECT personal_information_r.address_id FROM personal_information_r
+    GROUP BY personal_information_r.address_id HAVING count(*) > 1
+)
+AND personal_information_r.fullname_id = fullname_r.id
+AND address.region_id = region.id
+AND personal_information_r.address_id = address.id;
+
+#все призывники с военным билетом#
+SELECT conscript.id, fullname.firstname, fullname.secondname, fullname.surname, military_id.id, military_id.series, military_id.num
+FROM personal_information, fullname, conscript, private_bussiness, military_id, issued_military_id
+WHERE issued_military_id.military_id = military_id.id
+AND issued_military_id.conscript_id = conscript.id
+AND personal_information.fullname_id = fullname.id
+AND personal_information.id = private_bussiness.personal_information_id
+AND conscript.private_bussiness_id = private_bussiness.id;
+
+#все родственники с одинаковой национальностью#
+SELECT personal_information_r.id, fullname_r.firstname, fullname_r.secondname, fullname_r.surname, nationality.nationality_name FROM personal_information_r, fullname_r, nationality
+ WHERE personal_information_r.nationality_id IN (
+    SELECT personal_information_r.nationality_id FROM personal_information_r
+    GROUP BY personal_information_r.nationality_id HAVING count(*) > 1
+)
+AND personal_information_r.fullname_id = fullname_r.id
+AND personal_information_r.nationality_id = nationality.id;
+
+#призывники - усыновленные дети#
+#DISTINCT после SELECT для уникального выбора#
+SELECT conscript.id, fullname.firstname, fullname.secondname, fullname.surname, kinship.kinship_name, family_composition.order_of_kinship, personal_information_r.id, fullname_r.firstname, fullname_r.secondname, fullname_r.surname
+FROM personal_information, personal_information_r, family_composition, fullname_r, fullname, conscript, private_bussiness, kinship
+WHERE personal_information.id = 1
 AND personal_information.fullname_id = fullname.id
 AND personal_information.family_id = family_composition.family_id
 AND family_composition.relative_id = personal_information_r.id
 AND personal_information_r.fullname_id = fullname_r.id
 AND personal_information.id = private_bussiness.personal_information_id
 AND conscript.private_bussiness_id = private_bussiness.id
-AND family_composition.order_of_kinship = 2;*/
+AND family_composition.order_of_kinship = 1
+AND family_composition.kinship_id = kinship.id
+AND kinship.kinship_name = "Не кровное";
+
+#родственники с высшим образованием#
+SELECT personal_information_r.id, fullname_r.firstname, fullname_r.secondname, fullname_r.surname, education.education_name
+FROM personal_information_r, fullname_r, education
+WHERE personal_information_r.fullname_id = fullname_r.id
+AND personal_information_r.education_id = education.id
+AND education.education_name = "Высшее";
+
+#Призывники со званиями#
+SELECT conscript.id, fullname.firstname, fullname.secondname, fullname.surname, title.rank_name
+FROM personal_information, fullname, conscript, private_bussiness, title
+WHERE personal_information.fullname_id = fullname.id
+AND personal_information.id = private_bussiness.personal_information_id
+AND conscript.private_bussiness_id = private_bussiness.id
+AND conscript.title_id = title.id
+AND title.rank_name != 'Нет';
+
+#призывники из сибирского региона, не имеющие родственников с судимостями до 3 колена родства#
+SELECT DISTINCT conscript.id, fullname.firstname, fullname.secondname, fullname.surname, region.region_name
+FROM conscript, private_bussiness, personal_information, fullname, address, region, family_composition, personal_information_r
+WHERE personal_information.fullname_id = fullname.id
+AND personal_information.address_id = address.id
+AND address.region_id = region.id
+AND region.region_name = "Новосибирская обл"
+AND personal_information.id = private_bussiness.personal_information_id
+AND conscript.private_bussiness_id = private_bussiness.id
+AND personal_information.family_id = family_composition.family_id
+AND family_composition.relative_id = personal_information_r.id
+AND personal_information_r.criminal_record = FALSE
+AND family_composition.order_of_kinship <= 3;
+
+#призывники в IT без аккредитации#
+SELECT conscript.id, fullname.firstname, fullname.secondname, fullname.surname, institution.inst_name, institution.field_of_activity, institution.state_accreditation
+FROM conscript, private_bussiness, personal_information, fullname, institution, employment
+WHERE personal_information.fullname_id = fullname.id
+AND personal_information.employment_id = employment.id
+AND employment.institution_id = institution.id
+AND institution.state_accreditation = FALSE
+AND institution.field_of_activity = "IT"
+AND personal_information.id = private_bussiness.personal_information_id
+AND conscript.private_bussiness_id = private_bussiness.id;
+
+#снятые с учета призывники в 2017 году по причине психического нездоровья#
+SELECT conscript.id, fullname.firstname, fullname.secondname, fullname.surname, medical_status.status_name
+FROM personal_information, fullname, conscript, private_bussiness, medical_report, medical_status, psychiatrist, category
+WHERE personal_information.fullname_id = fullname.id
+AND personal_information.id = private_bussiness.personal_information_id
+AND conscript.private_bussiness_id = private_bussiness.id
+AND medical_report.medical_status_id = medical_status.id
+AND YEAR(private_bussiness.deregistration_date) = 2017
+AND medical_report.psychiatrist_id = psychiatrist.id
+AND psychiatrist.conclusion_id = category.id
+AND category.category_name = "Д";
 
 
 CALL percentage_healthy_people_regions();
